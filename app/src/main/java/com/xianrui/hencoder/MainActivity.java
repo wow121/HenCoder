@@ -15,6 +15,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.main);
         mTrimmingView = (TrimmingView) findViewById(R.id.trimming_view);
         mValueTextView = (TextView) findViewById(R.id.value_text);
+        mTrimmingView.setValueRange(100);
         mTrimmingView.setEnableLoop(true);
         mTrimmingView.setOnValueChangeListener(new TrimmingView.OnValueChangeListener() {
             @Override
@@ -35,6 +36,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onStopTrackingTouch(TrimmingView trimmingView) {
                 mValueTextView.setText(String.valueOf((int) trimmingView.getValue() / 10f));
+            }
+        });
+
+        mTrimmingView.setTickTextAdapter(new TrimmingView.TickTextAdapter() {
+            @Override
+            public String getTickText(int index) {
+                return String.valueOf(index / mTrimmingView.getHighlight_interval());
             }
         });
     }

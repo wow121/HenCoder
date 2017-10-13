@@ -28,7 +28,7 @@ public class TrimmingView extends View {
 
     //每隔多小个小格高亮
     @Px
-    private static final int HIGHLIGHT_INTERVAL = 10;
+    private int highlight_interval = 10;
 
     //小格之间的距离
     @Px
@@ -56,8 +56,6 @@ public class TrimmingView extends View {
 
     private float mMaxValue = 1000;
 
-    private float mMinValue = 0;
-
     private float fontHeight;
 
     float tickHeight;
@@ -71,6 +69,8 @@ public class TrimmingView extends View {
     private VelocityTracker mVelocityTracker;
 
     private boolean isInTouch = false;
+
+    private TickTextAdapter mTickTextAdapter;
 
 
     public TrimmingView(Context context) {
@@ -88,6 +88,10 @@ public class TrimmingView extends View {
 
     public void setOnValueChangeListener(OnValueChangeListener onValueChangeListener) {
         mOnValueChangeListener = onValueChangeListener;
+    }
+
+    public void setTickTextAdapter(TickTextAdapter tickTextAdapter) {
+        mTickTextAdapter = tickTextAdapter;
     }
 
     private void init() {
@@ -181,6 +185,14 @@ public class TrimmingView extends View {
         mCursorColor = cursorColor;
     }
 
+    public void setHighlight_interval(int highlight_interval) {
+        this.highlight_interval = highlight_interval;
+    }
+
+    public int getHighlight_interval() {
+        return highlight_interval;
+    }
+
     private void moveBy(int x) {
         mScroller.startScroll((int) mOffset, 0, x, 0, 500);
         invalidate();
@@ -240,17 +252,16 @@ public class TrimmingView extends View {
         canvas.translate(0, -getPaddingTop());
     }
 
-    public void setValueRange(float min, float max) {
-        this.mMinValue = min;
+    public void setValueRange(float max) {
         this.mMaxValue = max;
         invalidate();
     }
 
     public void setValue(float value) {
-        if (value < mMinValue || value > mMaxValue) {
+        if (value < 0 || value > mMaxValue) {
             return;
         }
-        float offset = (value / (mMaxValue - mMinValue)) * ((mMaxValue - mMinValue)) * TICK_DISTANCE;
+        float offset = (value / (mMaxValue)) * ((mMaxValue)) * TICK_DISTANCE;
         moveTo((int) offset);
     }
 
@@ -293,7 +304,7 @@ public class TrimmingView extends View {
     }
 
     public float getValue() {
-        return (mOffset / TICK_DISTANCE) + mMinValue;
+        return Math.abs(mOffset / TICK_DISTANCE);
     }
 
     private void moveToNearTick() {
@@ -330,13 +341,21 @@ public class TrimmingView extends View {
                 float start = startX - (count * TICK_DISTANCE);
                 index = (int) (mMaxValue - count);
                 while (start < startX) {
-                    if (index % HIGHLIGHT_INTERVAL == 0) {
+                    if (index % highlight_interval == 0) {
                         mPaint.setStrokeWidth(TICK_WIDTH);
                         canvas.drawLine(start, startY, start, startY + tickHeight, mPaint);
                         if (index >= mMaxValue) {
                             index = 0;
                         }
-                        canvas.drawText(String.valueOf(index / HIGHLIGHT_INTERVAL), start, startY + tickHeight + TEXT_TO_TICK_DISTANCE / 2 + fontHeight / 2, mTextPaint);
+
+                        String text;
+                        if (mTickTextAdapter != null) {
+                            text = mTickTextAdapter.getTickText(index);
+                        } else {
+                            text = String.valueOf(index);
+                        }
+                        canvas.drawText(text, start, startY + tickHeight + TEXT_TO_TICK_DISTANCE / 2 + fontHeight / 2, mTextPaint);
+
                     } else {
                         mPaint.setStrokeWidth(TICK_WIDTH / 2);
                         canvas.drawLine(start, startY + tickHeight / 2, start, startY + tickHeight, mPaint);
@@ -349,7 +368,7 @@ public class TrimmingView extends View {
 
 
         while (startX < getWidth() && index <= mMaxValue) {
-            if (index % HIGHLIGHT_INTERVAL == 0) {
+            if (index % highlight_interval == 0) {
                 mPaint.setStrokeWidth(TICK_WIDTH);
                 if (isLoop) {
                     if (index >= mMaxValue) {
@@ -357,7 +376,14 @@ public class TrimmingView extends View {
                     }
                 }
                 canvas.drawLine(startX, startY, startX, startY + tickHeight, mPaint);
-                canvas.drawText(String.valueOf(index / HIGHLIGHT_INTERVAL), startX, startY + tickHeight + TEXT_TO_TICK_DISTANCE / 2 + fontHeight / 2, mTextPaint);
+
+                String text;
+                if (mTickTextAdapter != null) {
+                    text = mTickTextAdapter.getTickText(index);
+                } else {
+                    text = String.valueOf(index);
+                }
+                canvas.drawText(text, startX, startY + tickHeight + TEXT_TO_TICK_DISTANCE / 2 + fontHeight / 2, mTextPaint);
             } else {
                 mPaint.setStrokeWidth(TICK_WIDTH / 2);
                 canvas.drawLine(startX, startY + tickHeight / 2, startX, startY + tickHeight, mPaint);
@@ -369,6 +395,11 @@ public class TrimmingView extends View {
 
         canvas.translate(0, -getPaddingTop());
     }
+
+    public interface TickTextAdapter {
+        String getTickText(int index);
+    }
+
 
     public interface OnValueChangeListener {
         public void onScroll(float distance);

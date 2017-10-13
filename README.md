@@ -4,7 +4,7 @@
 ```
     trimmingView.setEnableLoop(true) //设置是否循环
     
-    trimmingView.setValueRange(min,max) //设置值范围
+    trimmingView.setValueRange(max) //设置值范围
     
     trimmingView.setValue() //设置游标位置
     
@@ -16,5 +16,8 @@
          void onStartTrackingTouch(TrimmingView trimmingView);
     
          void onStopTrackingTouch(TrimmingView trimmingView);
-         
+    
+    trimmingView.setTickTextAdapter() //自定义高亮文字adapter
+         String getTickText(int index) 
+    
 ```
